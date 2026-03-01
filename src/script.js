@@ -63,4 +63,40 @@ function fetchNews() {
         });
     });
 }
-fetchNews();
+var newsGrid = document.getElementById('news-grid');
+function formatDate(dateString) {
+    var date = new Date(dateString);
+    var options = {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    };
+    return date.toLocaleDateString('en-GB', options);
+}
+function renderNews(articles) {
+    newsGrid.innerHTML = '';
+    var articlesToDisplay = articles.slice(0, 7);
+    articlesToDisplay.forEach(function (article) {
+        var card = document.createElement('article');
+        card.className = 'news-card';
+        var body = article.body ? article.body.substring(0, 200) + "..." : "No description available!";
+        card.innerHTML =
+            "\n        <h2 class=\"news-title\">".concat(article.title, "</h2>\n            <p class=\"news-date\">").concat(formatDate(article.date), "</p>\n            <p class=\"news-summary\">").concat(body, "</p>\n        ");
+        newsGrid.appendChild(card);
+    });
+}
+function init() {
+    return __awaiter(this, void 0, void 0, function () {
+        var articles;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, fetchNews()];
+                case 1:
+                    articles = _a.sent();
+                    renderNews(articles);
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+init();
