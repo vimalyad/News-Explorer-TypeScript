@@ -38,6 +38,40 @@ async function fetchNews(keyword: string = 'news'): Promise<Article[]> {
     }
 }
 
+const newsGrid = document.getElementById('news-grid') as HTMLDivElement;
 
+function formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    }
+    return date.toLocaleDateString('en-GB', options);
+}
 
-fetchNews();
+function renderNews(articles: Article[]) {
+    newsGrid.innerHTML = '';
+    const articlesToDisplay = articles.slice(0, 7);
+    articlesToDisplay.forEach((article) => {
+        const card = document.createElement('article');
+        card.className = 'news-card';
+
+        const body = article.body ? article.body.substring(0, 200) + "..." : "No description available!"
+
+        card.innerHTML =
+            `
+        <h2 class="news-title">${article.title}</h2>
+            <p class="news-date">${formatDate(article.date)}</p>
+            <p class="news-summary">${body}</p>
+        `;
+        newsGrid.appendChild(card);
+    });
+}
+
+async function init(){
+    const articles = await fetchNews();
+    renderNews(articles)
+}
+
+init();
