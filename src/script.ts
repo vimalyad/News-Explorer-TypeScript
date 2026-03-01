@@ -1,58 +1,13 @@
-import { CONFIG } from "./config.js";
-
-
-interface Article {
-    body: string,
-    date: string,
-    title: string
-}
-
-interface NewsApiResponse {
-    articles: {
-        results: Article[];
-        totalResults: number;
-        page: number;
-        count: number
-    }
-}
-
-
-async function fetchNews(keyword: string = 'news'): Promise<Article[]> {
-    try {
-        const response = await fetch(
-            `${CONFIG.NEWS_BASE_URL}?apiKey=${CONFIG.NEWS_API_KEY}&keyword=${keyword}&articlesCount=20&lang=eng`
-        );
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data: NewsApiResponse = await response.json();
-
-        const articles: Article[] = data.articles.results;
-
-        return articles;
-
-    } catch (error) {
-        console.error("Failed to fetch news:", error);
-        return [];
-    }
-}
+import { Article } from "./type.js";
+import fetchNews from "./api.js";
 
 const newsGrid = document.getElementById('news-grid') as HTMLDivElement;
 
-function formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    }
-    return date.toLocaleDateString('en-GB', options);
-}
+const showMoreButton = document.getElementById('show-more-btn') as HTMLButtonElement;
 
-function renderNews(articles: Article[]) {
-    newsGrid.innerHTML = '';
-    const articlesToDisplay = articles.slice(0, 7);
+let allArticles: Article[] = []
+
+function addCards(articlesToDisplay: Article[]) {
     articlesToDisplay.forEach((article) => {
         const card = document.createElement('article');
         card.className = 'news-card';
@@ -69,9 +24,41 @@ function renderNews(articles: Article[]) {
     });
 }
 
-async function init(){
-    const articles = await fetchNews();
-    renderNews(articles)
+function formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    }
+    return date.toLocaleDateString('en-GB', options);
+}
+
+function renderNews(articles: Article[], showAll: boolean = false) {
+    newsGrid.innerHTML = '';
+
+    const sortedArticles: Article[] = articles.sort((a, b) => {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+    })
+
+    const articlesToDisplay = showAll ? sortedArticles : sortedArticles.slice(0, 7);
+
+    addCards(articlesToDisplay);
+
+    if (!showAll && sortedArticles.length > 7) {
+        showMoreButton.classList.remove('hidden');
+    } else {
+        showMoreButton.classList.add('hidden');
+    }
+}
+
+showMoreButton.addEventListener('click' , () => {
+    renderNews(allArticles , true);
+})
+
+async function init() {
+    allArticles = await fetchNews();
+    renderNews(allArticles)
 }
 
 init();
