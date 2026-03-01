@@ -9,11 +9,8 @@ export default async function fetchNews(keyword: string = 'news'): Promise<Artic
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-
         const data: NewsApiResponse = await response.json();
-
         return data.articles.results;
-
     } catch (error) {
         console.error("Failed to fetch news:", error);
         return [];
