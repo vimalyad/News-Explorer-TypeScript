@@ -35,36 +35,31 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 import fetchNews from "./api.js";
+import { highlightedText, formatDate, debounce, sortByTime, filterByKeyWord } from "./helper.js";
 var newsGrid = document.getElementById('news-grid');
 var showMoreButton = document.getElementById('show-more-btn');
+var searchInput = document.getElementById('search-input');
 var allArticles = [];
-function addCards(articlesToDisplay) {
+function addCards(articlesToDisplay, keyword) {
+    if (keyword === void 0) { keyword = ''; }
     articlesToDisplay.forEach(function (article) {
         var card = document.createElement('article');
         card.className = 'news-card';
-        var body = article.body ? article.body.substring(0, 200) + "..." : "No description available!";
+        var body = article.body ? (article.body.substring(0, 200) + "...") : "No description available!";
+        var highlightedTitle = highlightedText(article.title, keyword);
+        var highlightedBody = highlightedText(body, keyword);
         card.innerHTML =
-            "\n        <h2 class=\"news-title\">".concat(article.title, "</h2>\n            <p class=\"news-date\">").concat(formatDate(article.date), "</p>\n            <p class=\"news-summary\">").concat(body, "</p>\n        ");
+            "\n        <h2 class=\"news-title\">".concat(highlightedTitle, "</h2>\n            <p class=\"news-date\">").concat(formatDate(article.date), "</p>\n            <p class=\"news-summary\">").concat(highlightedBody, "</p>\n        ");
         newsGrid.appendChild(card);
     });
 }
-function formatDate(dateString) {
-    var date = new Date(dateString);
-    var options = {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    };
-    return date.toLocaleDateString('en-GB', options);
-}
-function renderNews(articles, showAll) {
+function renderNews(articles, showAll, keyword) {
     if (showAll === void 0) { showAll = false; }
+    if (keyword === void 0) { keyword = ''; }
     newsGrid.innerHTML = '';
-    var sortedArticles = articles.sort(function (a, b) {
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-    });
+    var sortedArticles = sortByTime(articles);
     var articlesToDisplay = showAll ? sortedArticles : sortedArticles.slice(0, 7);
-    addCards(articlesToDisplay);
+    addCards(articlesToDisplay, keyword);
     if (!showAll && sortedArticles.length > 7) {
         showMoreButton.classList.remove('hidden');
     }
@@ -72,6 +67,16 @@ function renderNews(articles, showAll) {
         showMoreButton.classList.add('hidden');
     }
 }
+var handleSearch = function (event) {
+    var keyword = event.target.value.trim();
+    if (keyword) {
+        renderNews(filterByKeyWord(allArticles, keyword), false, keyword);
+    }
+    else {
+        renderNews(allArticles, false, '');
+    }
+};
+searchInput.addEventListener('input', debounce(handleSearch, 400));
 showMoreButton.addEventListener('click', function () {
     renderNews(allArticles, true);
 });
