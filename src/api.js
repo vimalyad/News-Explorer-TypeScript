@@ -35,15 +35,22 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 import { CONFIG } from "./config.js";
-export default function fetchNews() {
-    return __awaiter(this, arguments, void 0, function (keyword) {
-        var response, data, error_1;
+export function fetchNews() {
+    return __awaiter(this, arguments, void 0, function (keyword, categoryUris) {
+        var url_1, response, data, error_1;
         if (keyword === void 0) { keyword = 'news'; }
+        if (categoryUris === void 0) { categoryUris = []; }
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 3, , 4]);
-                    return [4 /*yield*/, fetch("".concat(CONFIG.NEWS_BASE_URL, "?apiKey=").concat(CONFIG.NEWS_API_KEY, "&keyword=").concat(CONFIG.BASE_KEYWORD, "&articlesCount=").concat(CONFIG.BASE_NEWS_COUNT, "&lang=eng"))];
+                    url_1 = "".concat(CONFIG.NEWS_BASE_URL, "?apiKey=").concat(CONFIG.NEWS_API_KEY, "&articlesCount=").concat(CONFIG.BASE_NEWS_COUNT, "&lang=eng&isDuplicateFilter=skipDuplicates");
+                    if (categoryUris.length > 0) {
+                        categoryUris.forEach(function (uri) { return url_1 += "&categoryUri=".concat(uri); });
+                    }
+                    else
+                        url_1 += "&keyword=".concat(keyword);
+                    return [4 /*yield*/, fetch(url_1)];
                 case 1:
                     response = _a.sent();
                     if (!response.ok) {
@@ -52,7 +59,7 @@ export default function fetchNews() {
                     return [4 /*yield*/, response.json()];
                 case 2:
                     data = _a.sent();
-                    return [2 /*return*/, data.articles.results];
+                    return [2 /*return*/, data.articles.results || []];
                 case 3:
                     error_1 = _a.sent();
                     console.error("Failed to fetch news:", error_1);

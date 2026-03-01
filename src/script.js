@@ -34,11 +34,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import fetchNews from "./api.js";
-import { highlightedText, formatDate, debounce, sortByTime, filterByKeyWord } from "./helper.js";
+import { fetchNews } from "./api.js";
+import { highlightedText, formatDate, debounce, sortByTime, filterByKeyWord, categoryMap } from "./helper.js";
 var newsGrid = document.getElementById('news-grid');
 var showMoreButton = document.getElementById('show-more-btn');
 var searchInput = document.getElementById('search-input');
+var tagsContainer = document.getElementById('tags-container');
+var allTags = document.querySelectorAll('.tag');
 var allArticles = [];
 function addCards(articlesToDisplay, keyword) {
     if (keyword === void 0) { keyword = ''; }
@@ -67,6 +69,40 @@ function renderNews(articles, showAll, keyword) {
         showMoreButton.classList.add('hidden');
     }
 }
+function showLoading() {
+    newsGrid.innerHTML = "\n        <div class=\"loader-container\">\n            <div class=\"spinner\"></div>\n            <p class=\"loader-text\">Fetching latest news...</p>\n        </div>\n    ";
+    showMoreButton.classList.add('hidden');
+}
+function updateArticlesByTags() {
+    return __awaiter(this, void 0, void 0, function () {
+        var activeTags, activeValues, newArticles, uris;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    searchInput.value = '';
+                    activeTags = Array.from(document.querySelectorAll('.tag.active'));
+                    activeValues = activeTags.map(function (tag) { return tag.getAttribute('data-value'); });
+                    newArticles = [];
+                    showLoading();
+                    if (!activeValues.some(function (val) { return val === 'all'; })) return [3 /*break*/, 2];
+                    return [4 /*yield*/, fetchNews()];
+                case 1:
+                    newArticles = _a.sent();
+                    return [3 /*break*/, 4];
+                case 2:
+                    uris = activeValues.map(function (val) { return categoryMap[val]; }).filter(Boolean);
+                    return [4 /*yield*/, fetchNews('', uris)];
+                case 3:
+                    newArticles = _a.sent();
+                    _a.label = 4;
+                case 4:
+                    allArticles = newArticles;
+                    renderNews(allArticles, false, '');
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
 var handleSearch = function (event) {
     var keyword = event.target.value.trim();
     if (keyword) {
@@ -76,15 +112,47 @@ var handleSearch = function (event) {
         renderNews(allArticles, false, '');
     }
 };
+// LISTENERS
 searchInput.addEventListener('input', debounce(handleSearch, 400));
 showMoreButton.addEventListener('click', function () {
     renderNews(allArticles, true);
 });
+tagsContainer.addEventListener('click', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    var clickedTag, tagValue, allTagButton, activeTags;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                clickedTag = event.target;
+                if (!clickedTag.classList.contains('tag'))
+                    return [2 /*return*/];
+                tagValue = clickedTag.getAttribute('data-value');
+                allTagButton = document.querySelector('.tag[data-value="all"]');
+                if (tagValue === 'all') {
+                    allTags.forEach(function (tag) { return tag.classList.remove('active'); });
+                    clickedTag.classList.add('active');
+                }
+                else {
+                    allTagButton.classList.remove('active');
+                    clickedTag.classList.toggle('active');
+                    activeTags = document.querySelectorAll('.tag.active');
+                    if (activeTags.length === 0) {
+                        allTagButton.classList.add('active');
+                    }
+                }
+                return [4 /*yield*/, updateArticlesByTags()];
+            case 1:
+                _a.sent();
+                return [2 /*return*/];
+        }
+    });
+}); });
 function init() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, fetchNews()];
+                case 0:
+                    showLoading();
+                    return [4 /*yield*/, fetchNews()];
                 case 1:
                     allArticles = _a.sent();
                     renderNews(allArticles);
