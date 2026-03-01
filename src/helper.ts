@@ -1,5 +1,12 @@
 import { Article } from "./type";
 
+export const categoryMap: { [key: string]: string } = {
+    'business': 'news/Business',
+    'politics': 'news/Politics',
+    'sports': 'news/Sports',
+    'entertainment': 'news/Arts_and_Entertainment'
+};
+
 export function formatDate(dateString: string): string {
     const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = {
