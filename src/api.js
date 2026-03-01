@@ -34,58 +34,31 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import fetchNews from "./api.js";
-var newsGrid = document.getElementById('news-grid');
-var showMoreButton = document.getElementById('show-more-btn');
-var allArticles = [];
-function addCards(articlesToDisplay) {
-    articlesToDisplay.forEach(function (article) {
-        var card = document.createElement('article');
-        card.className = 'news-card';
-        var body = article.body ? article.body.substring(0, 200) + "..." : "No description available!";
-        card.innerHTML =
-            "\n        <h2 class=\"news-title\">".concat(article.title, "</h2>\n            <p class=\"news-date\">").concat(formatDate(article.date), "</p>\n            <p class=\"news-summary\">").concat(body, "</p>\n        ");
-        newsGrid.appendChild(card);
-    });
-}
-function formatDate(dateString) {
-    var date = new Date(dateString);
-    var options = {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    };
-    return date.toLocaleDateString('en-GB', options);
-}
-function renderNews(articles, showAll) {
-    if (showAll === void 0) { showAll = false; }
-    newsGrid.innerHTML = '';
-    var sortedArticles = articles.sort(function (a, b) {
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-    });
-    var articlesToDisplay = showAll ? sortedArticles : sortedArticles.slice(0, 7);
-    addCards(articlesToDisplay);
-    if (!showAll && sortedArticles.length > 7) {
-        showMoreButton.classList.remove('hidden');
-    }
-    else {
-        showMoreButton.classList.add('hidden');
-    }
-}
-showMoreButton.addEventListener('click', function () {
-    renderNews(allArticles, true);
-});
-function init() {
-    return __awaiter(this, void 0, void 0, function () {
+import { CONFIG } from "./config.js";
+export default function fetchNews() {
+    return __awaiter(this, arguments, void 0, function (keyword) {
+        var response, data, error_1;
+        if (keyword === void 0) { keyword = 'news'; }
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, fetchNews()];
+                case 0:
+                    _a.trys.push([0, 3, , 4]);
+                    return [4 /*yield*/, fetch("".concat(CONFIG.NEWS_BASE_URL, "?apiKey=").concat(CONFIG.NEWS_API_KEY, "&keyword=").concat(CONFIG.BASE_KEYWORD, "&articlesCount=").concat(CONFIG.BASE_NEWS_COUNT, "&lang=eng"))];
                 case 1:
-                    allArticles = _a.sent();
-                    renderNews(allArticles);
-                    return [2 /*return*/];
+                    response = _a.sent();
+                    if (!response.ok) {
+                        throw new Error("HTTP error! status: ".concat(response.status));
+                    }
+                    return [4 /*yield*/, response.json()];
+                case 2:
+                    data = _a.sent();
+                    return [2 /*return*/, data.articles.results];
+                case 3:
+                    error_1 = _a.sent();
+                    console.error("Failed to fetch news:", error_1);
+                    return [2 /*return*/, []];
+                case 4: return [2 /*return*/];
             }
         });
     });
 }
-init();
