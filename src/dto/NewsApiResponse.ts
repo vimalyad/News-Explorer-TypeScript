@@ -1,10 +1,6 @@
-export interface Article {
-    body: string,
-    date: string,
-    title: string
-}
+import Article from "./Article.js";
 
-export interface NewsApiResponse {
+export default interface NewsApiResponse {
     articles: {
         results: Article[];
         totalResults: number;

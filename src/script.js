@@ -34,112 +34,72 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import { fetchNews } from "./api.js";
-import { highlightedText, formatDate, debounce, sortByTime, filterByKeyWord, categoryMap } from "./helper.js";
-var newsGrid = document.getElementById('news-grid');
-var showMoreButton = document.getElementById('show-more-btn');
-var searchInput = document.getElementById('search-input');
-var tagsContainer = document.getElementById('tags-container');
-var allTags = document.querySelectorAll('.tag');
+import { ApiService } from "./service/apiService.js";
+import { UIHandler } from "./service/UIHandler.js";
+import { ArticleUtil } from "./util/ArticleUtil.js";
+import { categoryMap } from "./config/constant.js";
+var apiService = new ApiService();
+var uiHandler = new UIHandler();
 var allArticles = [];
-function addCards(articlesToDisplay, keyword) {
-    if (keyword === void 0) { keyword = ''; }
-    articlesToDisplay.forEach(function (article) {
-        var card = document.createElement('article');
-        card.className = 'news-card';
-        var body = article.body ? (article.body.substring(0, 200) + "...") : "No description available!";
-        var highlightedTitle = highlightedText(article.title, keyword);
-        var highlightedBody = highlightedText(body, keyword);
-        card.innerHTML =
-            "\n        <h2 class=\"news-title\">".concat(highlightedTitle, "</h2>\n            <p class=\"news-date\">").concat(formatDate(article.date), "</p>\n            <p class=\"news-summary\">").concat(highlightedBody, "</p>\n        ");
-        newsGrid.appendChild(card);
-    });
-}
-function renderNews(articles, showAll, keyword) {
+function displayArticles(articles, showAll, keyword) {
     if (showAll === void 0) { showAll = false; }
-    if (keyword === void 0) { keyword = ''; }
-    newsGrid.innerHTML = '';
-    var sortedArticles = sortByTime(articles);
+    if (keyword === void 0) { keyword = ""; }
+    uiHandler.clearNewsGrid();
+    var sortedArticles = ArticleUtil.sortByTime(articles);
     var articlesToDisplay = showAll ? sortedArticles : sortedArticles.slice(0, 7);
-    addCards(articlesToDisplay, keyword);
+    uiHandler.addCards(articlesToDisplay, keyword);
     if (!showAll && sortedArticles.length > 7) {
-        showMoreButton.classList.remove('hidden');
+        uiHandler.showShowMoreButton();
     }
-    else {
-        showMoreButton.classList.add('hidden');
-    }
+    else
+        uiHandler.hideShowMoreButton();
 }
-function showLoading() {
-    newsGrid.innerHTML = "\n        <div class=\"loader-container\">\n            <div class=\"spinner\"></div>\n            <p class=\"loader-text\">Fetching latest news...</p>\n        </div>\n    ";
-    showMoreButton.classList.add('hidden');
-}
-function updateArticlesByTags() {
+function updateArticleByTags() {
     return __awaiter(this, void 0, void 0, function () {
-        var activeTags, activeValues, newArticles, uris;
+        var activeValues, uris;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    searchInput.value = '';
-                    activeTags = Array.from(document.querySelectorAll('.tag.active'));
-                    activeValues = activeTags.map(function (tag) { return tag.getAttribute('data-value'); });
-                    newArticles = [];
-                    showLoading();
+                    uiHandler.clearSearchInput();
+                    uiHandler.showLoading();
+                    activeValues = uiHandler.getActiveTagValues();
                     if (!activeValues.some(function (val) { return val === 'all'; })) return [3 /*break*/, 2];
-                    return [4 /*yield*/, fetchNews()];
+                    return [4 /*yield*/, apiService.fetchNews()];
                 case 1:
-                    newArticles = _a.sent();
+                    allArticles = _a.sent();
                     return [3 /*break*/, 4];
                 case 2:
                     uris = activeValues.map(function (val) { return categoryMap[val]; }).filter(Boolean);
-                    return [4 /*yield*/, fetchNews('', uris)];
+                    return [4 /*yield*/, apiService.fetchNews('', uris)];
                 case 3:
-                    newArticles = _a.sent();
+                    allArticles = _a.sent();
                     _a.label = 4;
                 case 4:
-                    allArticles = newArticles;
-                    renderNews(allArticles, false, '');
+                    displayArticles(allArticles, false, '');
                     return [2 /*return*/];
             }
         });
     });
 }
-var handleSearch = function (event) {
-    var keyword = event.target.value.trim();
+uiHandler.onSearchInput(function (event) {
+    var keyword = uiHandler.getSearchKeyword();
     if (keyword) {
-        renderNews(filterByKeyWord(allArticles, keyword), false, keyword);
+        var filteredArticles = ArticleUtil.filterByKeyWord(allArticles, keyword);
+        displayArticles(filteredArticles, false, keyword);
     }
     else {
-        renderNews(allArticles, false, '');
+        displayArticles(allArticles, false, '');
     }
-};
-// LISTENERS
-searchInput.addEventListener('input', debounce(handleSearch, 400));
-showMoreButton.addEventListener('click', function () {
-    renderNews(allArticles, true);
+}, 400);
+uiHandler.onShowMoreClick(function () {
+    displayArticles(allArticles, true);
 });
-tagsContainer.addEventListener('click', function (event) { return __awaiter(void 0, void 0, void 0, function () {
-    var clickedTag, tagValue, allTagButton, activeTags;
+uiHandler.onTagClick(function (clickedTag) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                clickedTag = event.target;
-                if (!clickedTag.classList.contains('tag'))
-                    return [2 /*return*/];
-                tagValue = clickedTag.getAttribute('data-value');
-                allTagButton = document.querySelector('.tag[data-value="all"]');
-                if (tagValue === 'all') {
-                    allTags.forEach(function (tag) { return tag.classList.remove('active'); });
-                    clickedTag.classList.add('active');
-                }
-                else {
-                    allTagButton.classList.remove('active');
-                    clickedTag.classList.toggle('active');
-                    activeTags = document.querySelectorAll('.tag.active');
-                    if (activeTags.length === 0) {
-                        allTagButton.classList.add('active');
-                    }
-                }
-                return [4 /*yield*/, updateArticlesByTags()];
+                uiHandler.updateTagStates(clickedTag);
+                return [4 /*yield*/, updateArticleByTags()];
             case 1:
                 _a.sent();
                 return [2 /*return*/];
@@ -151,11 +111,11 @@ function init() {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    showLoading();
-                    return [4 /*yield*/, fetchNews()];
+                    uiHandler.showLoading();
+                    return [4 /*yield*/, apiService.fetchNews()];
                 case 1:
                     allArticles = _a.sent();
-                    renderNews(allArticles);
+                    displayArticles(allArticles);
                     return [2 /*return*/];
             }
         });

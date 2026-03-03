@@ -34,38 +34,45 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import { CONFIG } from "./config.js";
-export function fetchNews() {
-    return __awaiter(this, arguments, void 0, function (keyword, categoryUris) {
-        var url_1, response, data, error_1;
-        if (keyword === void 0) { keyword = 'news'; }
-        if (categoryUris === void 0) { categoryUris = []; }
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 3, , 4]);
-                    url_1 = "".concat(CONFIG.NEWS_BASE_URL, "?apiKey=").concat(CONFIG.NEWS_API_KEY, "&articlesCount=").concat(CONFIG.BASE_NEWS_COUNT, "&lang=eng&isDuplicateFilter=skipDuplicates");
-                    if (categoryUris.length > 0) {
-                        categoryUris.forEach(function (uri) { return url_1 += "&categoryUri=".concat(uri); });
-                    }
-                    else
-                        url_1 += "&keyword=".concat(keyword);
-                    return [4 /*yield*/, fetch(url_1)];
-                case 1:
-                    response = _a.sent();
-                    if (!response.ok) {
-                        throw new Error("HTTP error! status: ".concat(response.status));
-                    }
-                    return [4 /*yield*/, response.json()];
-                case 2:
-                    data = _a.sent();
-                    return [2 /*return*/, data.articles.results || []];
-                case 3:
-                    error_1 = _a.sent();
-                    console.error("Failed to fetch news:", error_1);
-                    return [2 /*return*/, []];
-                case 4: return [2 /*return*/];
-            }
+import { CONFIG } from "../config/config.js";
+var ApiService = /** @class */ (function () {
+    function ApiService() {
+    }
+    ApiService.prototype.fetchNews = function () {
+        return __awaiter(this, arguments, void 0, function (keyword, categoryUris) {
+            var url, response, data;
+            if (keyword === void 0) { keyword = 'news'; }
+            if (categoryUris === void 0) { categoryUris = []; }
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        try {
+                        }
+                        catch (error) {
+                            console.error("Failed to fetch news:", error);
+                            return [2 /*return*/, []];
+                        }
+                        url = ApiService.createUrl(keyword, categoryUris);
+                        return [4 /*yield*/, fetch(url)];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, response.json()];
+                    case 2:
+                        data = _a.sent();
+                        return [2 /*return*/, data.articles.results || []];
+                }
+            });
         });
-    });
-}
+    };
+    ApiService.createUrl = function (keyword, categoryUris) {
+        var baseUrl = "".concat(CONFIG.NEWS_BASE_URL, "?apiKey=").concat(CONFIG.NEWS_API_KEY, "&articlesCount=").concat(CONFIG.BASE_NEWS_COUNT, "&lang=eng&isDuplicateFilter=skipDuplicates");
+        if (categoryUris.length > 0) {
+            categoryUris.forEach(function (uri) { return baseUrl += "&categoryUri=".concat(uri); });
+        }
+        else
+            baseUrl += "&keyword=".concat(keyword);
+        return baseUrl;
+    };
+    return ApiService;
+}());
+export { ApiService };
